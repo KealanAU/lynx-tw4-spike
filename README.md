@@ -43,12 +43,14 @@ The `CSS_RULE=1` column was confirmed on the PostCSS setup. The other two column
 | `*:` | Pass | Pass | Fail |
 | `active:` | Pass | Pass | Fail |
 | `dark:` | Not testable | Not testable | Fail |
+| `theme-dark:` (class-based) | Pass | Not run | Not run |
 
 - **`RAW=1`:** with `enableCSSRule` off, none of the utilities inside `@layer` apply, so left boxes lose their class styles. A box with no inline background or width disappears. With it on and `KEEP_LAYERS=1`, the selector groups are fixed and there are no warnings, but the left side is still broken on Explorer. Lynx's encoder, decoder and style resolver all have `@layer` code, so the cause is an open question, and the plugin still unwraps `@layer`.
 - **Selector groups:** with the flag on, the encoder drops `:root,:host`, `*,:before,:after,::backdrop` and the merged `:is()`, `:first-child` and `:active` group whole, because each contains an unsupported selector.
 - **`rem`:** Lynx's default font size is 14px, so `1rem` is 14px, not 16px. The references assume 16px: `w-24` is 84px against 96px, `translate-x-4` is 14px against 16px, and `text-lg` is 15.75px against 18px. The `w-24` row also overflows, so both of its boxes shrink.
 - **`text-lg` line height:** a line height of `calc()` inside a custom property has no effect. The plain value in `src/App.css` applies.
 - **`first:`:** the rule reaches Lynx, but Lynx doesn't apply `:first-child`.
-- **`dark:`:** the rule is in the build, but released Explorer (4.2.0 and earlier) never passes the simulator's appearance to Lynx, so `prefers-color-scheme` stays `light`. Toggling it with ⇧⌘A changes nothing. Explorer's support is on `develop` ([`be09081`](https://github.com/lynx-family/lynx/commit/be09081d3)), not in a release. Apps need a host that calls `updateColorScheme`, or a class-based `@custom-variant` driven by `lynx.__globalProps`, which is untested here.
+- **`dark:`:** the rule is in the build, but released Explorer (4.2.0 and earlier) never passes the simulator's appearance to Lynx, so `prefers-color-scheme` stays `light`. Toggling it with ⇧⌘A changes nothing. Explorer's support is on `develop` ([`be09081`](https://github.com/lynx-family/lynx/commit/be09081d3)), not in a release. Apps need a host that calls `updateColorScheme`, or the class-based route below.
+- **`theme-dark:`:** Explorer does pass the device theme in `lynx.__globalProps.theme`. The row reads it on load and sets a class on the parent, and `@custom-variant theme-dark (.theme-dark &)` applies the style. It starts red in dark mode and blue in light mode, and the toggle restyles it live. `theme` is Explorer's own prop, so other hosts must pass their own, and the source shows no update when the device theme changes, so the bundle has to be reopened.
 - **Warnings:** the earlier setup warned that `translate`, `scale` and `rotate` were removed, which was harmless because the `transform` overrides do the work. The PostCSS setup doesn't show those warnings, though selector warnings still appear with `RAW=1 CSS_RULE=1`.
 - **Production:** `CSS_RULE=1 pnpm build` shows no warnings, so no selector group is dropped. It hasn't been opened on a device.

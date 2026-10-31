@@ -13,6 +13,11 @@
   --color-red-500: #ef4444;
 }
 
+/* prefers-color-scheme depends on the host, so this variant follows a class the
+ * page sets itself. Not Tailwind's usual `:where()` form, which Lynx's docs
+ * list as unsupported. */
+@custom-variant theme-dark (.theme-dark &);
+
 /* Lynx can't resolve calc() inside a custom property, so transform steps and
  * text-lg are plain theme values. `inline` writes the value itself into the
  * utility, not a var() pointing at the theme variable.
