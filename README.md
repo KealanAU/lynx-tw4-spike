@@ -2,20 +2,134 @@
 
 This spike looks for the smallest Lynx layer needed on top of the official Tailwind v4 integration, [`@rsbuild/plugin-tailwindcss`](https://rsbuild.rs/plugins/list/plugin-tailwindcss). It accompanies [lynx-family/lynx-stack#69](https://github.com/lynx-family/lynx-stack/issues/69).
 
-`main` is currently the baseline: the official plugin with default options and no rewriting. Fixes get added one at a time, each with its result.
+## Synopsis
 
-Each row renders a v4 class next to an inline-style reference. If the two boxes differ, that utility doesn't work on Lynx.
+Tailwind v4 works on Lynx through the official plugin, with no new build integration. The Lynx layer is one CSS entry with a generated palette, a roughly 10-line PostCSS plugin, and two config settings.
 
-## Run
+- **Works:** on the iOS simulator with Explorer 4.2.0, nearly every tile matches its reference in dev and production, with no build warnings.
+- **Main finding:** `@layer` rules are silently discarded below SDK 4.2, and with `enableCSSRule` off the whole stylesheet is dropped with no warning. Most other failures come from `:root,:host` being dropped, and from the encoder removing properties v4 relies on.
+- **Fails:** `first:`, `prefers-color-scheme`, `uppercase` and `ring-*`, and `space-x-*` only works in production.
+- **Not proven:** Android, a real device, SDKs below 4.2, and coverage beyond this page's tiles.
 
-```sh
-pnpm install
-pnpm dev               # enableCSSRule off
-CSS_RULE=1 pnpm dev    # enableCSSRule on, which @media variants need
-```
+The first attempt is at the [`first-spike`](https://github.com/KealanAU/lynx-tw4-spike/tree/first-spike) tag.
 
-Open the printed `main.lynx.bundle` URL in [Lynx Explorer](https://lynxjs.org/guide/start/quick-start.html). Delete `dist/` when you switch between modes.
+Tested with rspeedy 0.18.2, `@rsbuild/plugin-tailwindcss` 2.0.3, tailwindcss 4.3.3, `@lynx-js/tasm` 0.0.49 and `@lynx-js/css-serializer` 0.1.9. Source was read at lynx-family/lynx `4.2.0` and `develop` (`ab7abc9`).
 
-The references assume `1rem` is 16px, but Lynx's default is 14px, so `rem` rows differ.
+## What's next
 
-The first attempt and its results are at the [`first-spike`](https://github.com/KealanAU/lynx-tw4-spike/tree/first-spike) tag.
+**Last check:** this exact setup hasn't been on a device, because `optimize` changed from `{ minify: false }` to `true` after the recorded runs. Run `rm -rf dist; pnpm dev` and compare the whole page. Only `first:`, `dark:`, `prefers-color-scheme`, `ring-2` and `space-x-2` should differ. Hold the `active:` tile as well, since it has never been confirmed pressed.
+
+**Next steps:**
+
+1. Post the findings on #69 and get the maintainers' answers.
+2. Run on Android and a real device.
+3. Run with no `layer()` on an SDK below 4.2, using an older Explorer.
+4. Check coverage family by family against the v3 matrix, and add negative transforms and `ps-*`/`pe-*`.
+5. Try the options under `Known failures`.
+6. Test whether `enableCSSInlineVariables` and `enableCSSInheritance` are needed.
+7. Move the entry and PostCSS plugin into `@lynx-js/tailwind-preset`, if the maintainers want that shape.
+
+## Known failures
+
+These options come from reading source and docs. None of them has been built or run yet.
+
+| Failure | Cause | Recommended | Alternatives |
+|---|---|---|---|
+| `first:` and other structural variants | The parser accepts them, but the matcher has no case, so they never apply. No upstream work found | Use conditional classes in the app (`i === 0 ? 'a' : 'b'`) and warn from the PostCSS plugin | Upstream matcher support, roughly 100 lines plus tests, modelled on [lynx#5689](https://github.com/lynx-family/lynx/pull/5689). Sibling invalidation is the hard part. An encoder warning for selectors that can never match |
+| `dark:` | Explorer never calls `updateColorScheme`. Apps that call it should get working `dark:` with `enableCSSRule` on; not run | Keep Tailwind's media default and document `updateColorScheme`. Offer `@custom-variant dark (.dark &)` as opt-in, since Lynx has no agreed class or prop name | Explorer gets it on `release/4.4`. A cherry-pick to 4.3 would be sooner |
+| `uppercase` | Lynx has no `text-transform`, and its docs list it as unsupported | Exclude with `@source not inline("uppercase lowercase capitalize")` and use `.toUpperCase()` in JS | None found |
+| `ring-*` | v4's `box-shadow` list has variables with no defaults, because `@property` isn't supported | Add width, colour and shadow variables to the `*` reset, with `ring-*` and `shadow-*` writing the same `box-shadow` | Leave it out, as v3 does |
+| `space-x-*` | Nested `calc()` is rejected in dev, and `:not(:last-child)` matches every child | In the PostCSS plugin, turn inner `calc(` into `(` and rewrite to `> * + *` | Upstream nested `calc()` and `:last-child` support |
+
+A live global props update can be tested on unmodified Explorer 4.2.0: `NativeModules.ExplorerModule.saveThemePreferences('preferredTheme', 'Dark')` pushes new props to an open page. Reset it to `Auto` afterwards, because the value persists.
+
+## Smallest setup
+
+On top of `@rsbuild/plugin-tailwindcss`:
+
+- `src/App.css` and `src/palette.css`: the CSS entry, with hex colours and `@utility` overrides.
+- `lynx-postcss.cjs`, loaded by `postcss.config.cjs`: removes `:host` and `::backdrop`, and unwraps `:is()` and `:where()`.
+- `lynx.config.ts`: `pluginTailwindcss({ optimize: true })` and `enableCSSRule: true`.
+
+`enableCSSInlineVariables` and `enableCSSInheritance` are kept from `examples/tailwindcss`. Whether they're needed hasn't been tested.
+
+## Runs
+
+`pnpm dev` runs the setup above, and the switches below turn parts of it off. Each run changes one variable from its neighbour. Delete `dist/` between runs. The page header shows the run, mode, platform, SDK, engine and theme.
+
+| Run | Command | Variable |
+|---|---|---|
+| `baseline-off` | `ENTRY=runs/baseline.css CSS_RULE=0 POSTCSS=0 OPTIMIZE=0 pnpm dev` | Official plugin, default options |
+| `baseline-on` | `ENTRY=runs/baseline.css POSTCSS=0 OPTIMIZE=0 pnpm dev` | `enableCSSRule` |
+| `hand-on` | `ENTRY=runs/empty.css POSTCSS=0 OPTIMIZE=0 pnpm dev` | No Tailwind, only `src/hand.css` |
+| `engine-on` | `ENGINE=3.9 ENTRY=runs/baseline.css POSTCSS=0 OPTIMIZE=0 pnpm dev` | `engineVersion` |
+| `nolayer-on` | `ENTRY=runs/nolayer.css POSTCSS=0 OPTIMIZE=0 pnpm dev` | Imports without `layer()` |
+| `postcss-on` | `ENTRY=runs/baseline.css OPTIMIZE=0 pnpm dev` | Selector rewrite after Tailwind |
+| `optimize-on` | `ENTRY=runs/baseline.css POSTCSS=0 pnpm dev` | Lightning CSS in dev |
+| `dark-class-on` | `ENTRY=runs/dark-class.css POSTCSS=0 OPTIMIZE=0 pnpm dev` | `dark:` pointed at a class |
+| `preset-on` | `pnpm dev` | The full setup. The recorded run used `optimize: { minify: false }` |
+| `preset-prod` | `pnpm build`, then `pnpm exec rspeedy preview` | Production |
+
+Open the printed `main.lynx.bundle` URL in [Lynx Explorer](https://lynxjs.org/guide/start/quick-start.html). References use `rem` wherever Tailwind does, so a tile compares the utility and not the 14px-or-16px decision. The `rem` tile measures that separately.
+
+## Results
+
+Evidence labels: **seen on device**, **measured** (build output, encoder run or screenshot measurement), **source**, **docs**, **reported** (described to us, no screenshot), **inferred**.
+
+| # | What we see | Setup | Evidence | Where the fix belongs | Works? |
+|---|---|---|---|---|---|
+| 1 | With `enableCSSRule` off, the whole Tailwind stylesheet is dropped with no warning: every class tile is unstyled, including `bg-[#ef4444]`. The encoder input is only `LayerRule`s, and `CSSParser::ParseCSS` only handles style, keyframes and font-face rules on that path | `baseline-off`, iOS simulator, SDK 4.0 | Seen on device, measured, source | Turn the flag on; imports without `layer()` for older hosts | Yes with the flag on, on 4.2 |
+| 2 | **`@layer` works from 4.2.0 and is silently lost before it.** On SDK 4.0, hand-written rules inside `@layer` don't apply, with no warning. On SDK 4.2, all six tiles pass: plain layer, `@media` in a layer, statement order, unlayered winning, and a `:root` variable set in a layer. In 4.0.3 and 4.1.2, `DecodeCSSLayerRule` decodes each child rule and discards it; 4.2.0 adds it to a `CascadeLayer` | `hand-on`, iOS simulator, SDK 4.0 and 4.2 | Seen on device, source | Runtime 4.2.0. Hosts below 4.2 need imports without `layer()` | Yes on 4.2 |
+| 3 | One invalid selector drops its whole rule, because `ConsumeComplexSelectorList` returns empty. CSS specifies the same for selector lists, so this isn't a bug. `:host`, `::backdrop`, `:is()`, `:where()`, `:has()` and `::file-selector-button` are rejected. `:root`, `*`, `::before` and `:before` are accepted, so the lead's `*,:before,:after,::backdrop` fails only on `::backdrop` | Encoder 0.0.49, one selector at a time; `postcss-on` | Measured, source, seen on device | PostCSS, or encoder support for those selectors | Yes on 4.2 |
+| 4 | `:is()` is in the pseudo table, but the parser returns `nullptr` for it and the matcher has no case. An upstream fix needs both. `@custom-variant *` is rejected by Tailwind as an invalid name, so config can't fix `*:`. Unwrapping `:is()` in PostCSS makes `*:` match its reference | `baseline-on`, `postcss-on`, SDK 4.2 | Seen on device, measured, source | PostCSS, or parser and matcher | Yes on 4.2 |
+| 5 | Dev and production differ by default. The plugin sets `optimize` only in production, and Lightning CSS then merges `:is(…)`, `:first-child` and `:active` into one list, so one bad selector loses them all. With the rewrite, `*:` applies in production from that merged rule. `active:` hasn't been pressed on a device | `preset-prod`, SDK 4.2 | Seen on device, measured | PostCSS | Yes on 4.2; `active:` press pending |
+| 6 | `rotate`, `translate` and `scale` are removed on both paths, but only the `enableCSSRule` off path warns: bundle size is identical with and without them when on. The first spike's warnings probably vanished because that run had `CSS_RULE=1`, not because of PostCSS. Preset overrides composing into `transform` make `rotate-45`, `scale-50`, `rotate-45 scale-50` and `translate-x-[16px]` match | `preset-on`, SDK 4.2 | Seen on device, measured; PostCSS cause inferred | Preset `@utility` writing `transform` | Yes on 4.2 |
+| 7 | **New.** v4 emits logical shorthands that the encoder removes: `padding-inline` (`px-*`), `padding-block` (`py-*`), `margin-inline` (`mx-*`), `margin-block` and `inset`. Also removed: `text-decoration-line` (`underline`) and others, 57 properties across 200 sampled classes. Preset overrides make `px-2`, `py-2`, `mx-2` and `underline` match | `preset-on`, SDK 4.2 | Seen on device, measured | Preset `@utility` | Yes on 4.2 for those; others not built |
+| 8 | Lynx's colour parser has no `oklch()`, `oklab()` or `color-mix()`, and v4's palette is `oklch()`. A generated hex `@theme` makes `bg-red-500`, `text-red-500` and the border colour match. The first spike's `#ef4444` reference was v3's value; v4's is `#fb2c36` | `preset-on`, SDK 4.2 | Seen on device, source | Preset `@theme` with hex values | Yes on 4.2 |
+| 9 | `color-mix()` reaches Lynx in dev by default, because `optimize` is off. With `optimize` and hex theme variables, `bg-red-500/50` becomes `#fb2c3680` and matches. With `theme(inline)`, even `optimize` leaves `oklab(…)`, so inlining the theme breaks `/opacity` | `preset-on`, SDK 4.2 | Seen on device, measured | `optimize: { minify: false }`, keep theme vars | Yes on 4.2 |
+| 10 | `:root,:host` drops every theme variable when the flag is on. Filtering out `:host` in PostCSS brings back `w-10`, `size-10`, `ml-4`, `gap-2`, `p-2`, `rounded-xl`, `font-bold` and `text-lg`'s font size. `theme(inline)` avoids it but hits #9, and `theme(reference)` with a hand-written `:root` loses tree-shaking | `baseline-on`, `postcss-on`, SDK 4.2 | Seen on device, measured | PostCSS, or `:host` support in the encoder | Yes on 4.2 |
+| 11 | With theme variables restored, `text-lg` gets its font size but not its line height, and `leading-6`, which uses `calc()` directly, fails too. Plain theme values fix both | `postcss-on`, `preset-on`, SDK 4.2 | Seen on device | Preset `@theme` plain values | Yes on 4.2 |
+| 12 | `@media` needs `enableCSSRule`, available since 4.0. With it on, `max-sm:` applies and `sm:` stays blue, inside `@layer` too | `baseline-on`, SDK 4.2 | Seen on device, source | Lynx config | Yes |
+| 13 | `first:` compiles and encodes with no warning but stays blue, because the matcher has no `:first-child` case. The same goes for `:last-child`, `:nth-child()` and the others not in `MatchPseudoClass` | `baseline-on`, SDK 4.2 | Seen on device, source | Runtime, or exclude; maintainer decision | Fails, as expected |
+| 14 | `prefers-color-scheme` stays light on released Explorer: with the header showing `theme Dark`, both `dark:` and the hand-written `@media` tile stay blue, on SDK 4.0 and 4.2. The engine has `updateColorScheme` since 4.0, so this looks Explorer-only. Explorer starts calling it in `be09081`, which is on `release/4.4` but not `release/4.3` or any tag | `hand-on`, `baseline-on`, `postcss-on` | Seen on device, source; Explorer-only inferred | Explorer release, or class route | Fails on released Explorer |
+| 15 | **`dark:` pointed at a class works:** with `@custom-variant dark (.dark &)` and a class set from the `theme` prop, `dark:` is red in Dark and blue in Light. ⇧⌘A works and the page is right after reopening, but an open page doesn't update: Explorer 4.2.0 only sets `theme` when it builds global props, and has no `traitCollectionDidChange`. `be09081` adds that. So this isn't hot reload; the host never sends the change. Other hosts must pass their own prop | `dark-class-on`, SDK 4.2 | Seen on device, source; open-page behaviour reported | Tailwind config; maintainer decision | Yes after reopening |
+| 16 | `1rem` is about 14px: in the `rem` tile the `1rem` box matches the 14px box and is narrower than the 16px one, and `DEFAULT_FONT_SIZE_DP` is 14 | `hand-on`, `rem` tile | Measured from screenshot, source | Maintainer decision | Confirmed |
+| 17 | The encoder refuses `engineVersion` 4.2: "current compiler only support lynx version [1.0, 3.9]". At 3.9 the warnings match the default 3.2, and the rule-path decoder has no version gate on layers | `engine-on` | Measured, source | None seen | Not run on a device |
+| 18 | PostCSS runs after Tailwind. A plugin loaded from `postcss.config.cjs` saw `.w-24 { width: calc(var(--spacing) * 24) }`, with no bundler hook | `postcss-on` | Measured | No change needed | Yes |
+| 19 | `@utility rotate-*` adds to the built-in: both rules are emitted, custom last. Lightning CSS then removes the built-in `rotate`. `@source not inline()` removes exact candidates only, and `--blur-*: initial` removes themed values, but `blur-[2px]` survives | Direct compile | Measured | Preset CSS; see below | Yes at build |
+| 20 | Hot reload after changing a class in a `.tsx` file works on the setup, including a class not used before. `@tailwindcss/webpack` registers context dependencies, which would explain it | `preset-on`, SDK 4.2 | Reported by the user, no screenshot; source | No change needed | Reported yes |
+| 21 | `text-transform` isn't applied even inline: the `uppercase` reference renders `Ag xy` unchanged, so no utility can fix it. The v3 matrix also lists it as unsupported | `hand-on`, `baseline-on` | Seen on device, docs | Runtime, or exclude `uppercase` | No preset fix |
+| 22 | `opacity-50` emits `opacity: 50%` in dev and has no effect; `optimize` lowers it to `.5`, which matches | `baseline-on`, `postcss-on`, `preset-on`, SDK 4.2 | Seen on device, measured | `optimize: { minify: false }` | Yes on 4.2 |
+| 23 | `rounded-full` emits `calc(infinity * 1px)`, uses no variable, and fails in dev. `optimize` lowers it to `3.40282e38px`, which matches | `baseline-on`, `preset-on`, SDK 4.2 | Seen on device, measured | `optimize: { minify: false }` | Yes on 4.2 |
+| 24 | A `transform` built from variables with empty fallbacks works: `skew-x-12` matches its reference. The preset composes transforms the same way | `baseline-on`, SDK 4.2 | Seen on device | No change needed | Yes |
+| 25 | Gradients match once the theme is hex and `optimize` is on, which is better than the v3 matrix. `ring-*` still fails, and the v3 matrix lists it as not supported, so it isn't a v4 regression. `space-x-2` failed in dev and passes in production: the length parser rejects nested `calc(calc(…))`, and production's cssnano step flattens it. Even there `:not(:last-child)` matches every child, so the last child probably keeps a trailing margin | `preset-on`, `preset-prod`, SDK 4.2 | Seen on device, docs, source; cssnano step and trailing margin inferred | See `Known failures` | Gradients yes; `space-x-*` production only; `ring-*` not built |
+| 26 | The full setup in production matches dev, with no warnings or errors | `preset-prod`, SDK 4.2 | Seen on device | No change needed | Yes on 4.2 |
+| 30 | Android, a real device, and no `layer()` on an SDK below 4.2 have not been run | — | — | — | Not run |
+| 27 | `calc()` inside a custom property has no effect, even with constants: `translate-x-4` didn't move and `skewX(calc(12 * 1deg))` didn't skew. Plain translate steps and `--value(integer)deg` fix both | `preset-on`, SDK 4.2 | Seen on device | Preset CSS | Yes on 4.2 |
+| 28 | Custom properties inherit, with no `@property` to stop them: a `rotate-45` child inside `translate-x-[16px]` also picked up the parent's translate (left edge at 548px in the screenshot, against 549 predicted with inheritance and 518 without). A `*` reset fixes it, as the v3 preset already does | `preset-on`, SDK 4.2 | Seen on device, measured from screenshot, source | Preset CSS | Yes on 4.2 |
+| 29 | `blur-xs` has no effect through `--tw-blur`. Writing `filter` directly, as v3 does, matches | `preset-on`, SDK 4.2 | Seen on device | Preset `@utility` | Yes on 4.2 |
+
+`decode_napi` in `@lynx-js/tasm` fails on every `enableCSSRule` bundle, even without `@layer`, so it can't confirm what was encoded.
+
+## Preset shape
+
+A CSS entry looks like `src/App.css`: no preflight, no `layer()`, a generated hex palette, plain line heights and transform steps, and `@utility` overrides. Negative transforms, `ps-*`/`pe-*`, `inset-x-*`/`inset-y-*`, and ring aren't included yet. Coverage has been checked on this page's tiles, not family by family against the v3 matrix. Coverage of the [v3 matrix](https://github.com/lynx-family/lynx-stack/blob/main/packages/tailwind-preset/docs/tailwind-css-v3-support.md) can't be counted until that exists; row 7 lists the families that need work.
+
+v4 has no `corePlugins`. Unsupported built-ins can be stopped in three partial ways:
+
+- The encoder already removes unsupported properties, so most built-ins are dead code plus a warning on the `enableCSSRule` off path.
+- `@source not inline()` removes exact candidates, which suits variants and fixed names but not arbitrary values.
+- `--namespace-*: initial` removes themed values only.
+
+## Decisions for the maintainers
+
+- **`rem`:** Lynx's `1rem` is 14px, so the default scale is 12.5% smaller than web. Keeping it matches the platform and the v3 preset's unit; rewriting the theme to pixels or web sizes would match Tailwind designs. Neither was chosen here.
+- **`dark:`:** `prefers-color-scheme` is standard but stays light until hosts call `updateColorScheme`, and released Explorer doesn't. A class works today but needs a prop from each host, and only updates if the host pushes changes.
+- **Structural variants:** `first:` and similar compile with no warning and never apply. Leaving them keeps the API and fails silently. `@source not inline()` can exclude exact classes but not a whole variant. Runtime support would fix them properly.
+
+## The 2026-10-19 draft
+
+- **Keep:** the entry shape in `v4.css` without preflight, the `@utility` transform set, the inlined shadow scale, and the compile-based test in `v4.test.ts`.
+- **Drop:** `rsbuild.ts` and `loader.ts`, because `postcss.config.cjs` runs after Tailwind with no bundler hook (row 18).
+- **Recheck:** the `postcss.ts` comment that Lynx "never applies" `@layer` rules is true on SDK 4.0 but not by source on 4.2.0 (row 2). Its selector filter misses `:is()`. Layer unwrapping, `oklch` conversion and `calc()` folding weren't needed, because no `layer()`, a hex palette and plain steps cover them.
+- **Keep, moved out of `@layer`:** the `*` transform defaults. Without them children inherit their parent's transform (row 28).

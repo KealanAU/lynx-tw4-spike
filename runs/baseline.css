@@ -1,0 +1,6 @@
+/* `@import "tailwindcss"` minus preflight (the v3 preset also disables it).
+ * source("../src") limits scanning to src/: if v4 scans dist/, every build
+ * output triggers another build. */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities) source("../src");

@@ -1,0 +1,24 @@
+.hand-plain { background-color: #ef4444 }
+
+@layer x { .hand-layer { background-color: #ef4444 } }
+
+@layer x { @media (min-width: 1px) { .hand-layer-media { background-color: #ef4444 } } }
+
+/* Statement order puts `low` first, so `high` wins despite coming first in the file. */
+@layer low, high;
+@layer high { .hand-order { background-color: #ef4444 } }
+@layer low { .hand-order { background-color: #3b82f6 } }
+
+/* Unlayered beats layered, whatever the source order. */
+.hand-unlayered { background-color: #ef4444 }
+@layer x { .hand-unlayered { background-color: #3b82f6 } }
+
+/* A custom property set inside a layer, read outside it. */
+@layer x { :root { --hand-var: #ef4444 } }
+.hand-var { background-color: var(--hand-var) }
+
+.hand-dark-media { background-color: #3b82f6 }
+@media (prefers-color-scheme: dark) { .hand-dark-media { background-color: #ef4444 } }
+
+.hand-dark-class { background-color: #3b82f6 }
+.dark .hand-dark-class { background-color: #ef4444 }

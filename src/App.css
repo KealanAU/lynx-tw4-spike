@@ -1,6 +1,192 @@
-/* `@import "tailwindcss"` minus preflight (the v3 preset also disables it).
- * source("./") limits scanning to src/: if v4 scans dist/, every build
- * output triggers another build. */
-@layer theme, base, components, utilities;
-@import "tailwindcss/theme.css" layer(theme);
-@import "tailwindcss/utilities.css" layer(utilities) source("./");
+/* No preflight, as in the v3 preset, and no layer(), because SDKs below 4.2
+ * discard rules inside @layer. */
+@import "tailwindcss/theme.css";
+@import "./palette.css";
+@import "tailwindcss/utilities.css" source("./");
+
+/* calc() inside a custom property has no effect on line height. */
+@theme {
+  --text-xs--line-height: 1.3333;
+  --text-sm--line-height: 1.4286;
+  --text-base--line-height: 1.5;
+  --text-lg--line-height: 1.5556;
+  --text-xl--line-height: 1.4;
+  --text-2xl--line-height: 1.3333;
+  --text-3xl--line-height: 1.2;
+  --text-4xl--line-height: 1.1111;
+}
+
+/* Inlined so Lightning CSS can lower rgb(… / …), which it can't in a variable. */
+@theme inline {
+  --shadow-2xs: 0 1px rgb(0 0 0 / 0.05);
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+  --blur-xs: 4px;
+  --blur-sm: 8px;
+  --blur-md: 12px;
+  --blur-lg: 16px;
+  --blur-xl: 24px;
+  --blur-2xl: 40px;
+  --blur-3xl: 64px;
+
+  /* Plain steps from the v3 preset, because calc() has no effect on line height
+   * or inside a custom property. */
+  --leading-3: 0.75rem;
+  --leading-4: 1rem;
+  --leading-5: 1.25rem;
+  --leading-6: 1.5rem;
+  --leading-7: 1.75rem;
+  --leading-8: 2rem;
+  --leading-9: 2.25rem;
+  --leading-10: 2.5rem;
+  --translate-px: 1px;
+  --translate-0: 0rem;
+  --translate-0\.5: 0.125rem;
+  --translate-1: 0.25rem;
+  --translate-1\.5: 0.375rem;
+  --translate-2: 0.5rem;
+  --translate-2\.5: 0.625rem;
+  --translate-3: 0.75rem;
+  --translate-3\.5: 0.875rem;
+  --translate-4: 1rem;
+  --translate-5: 1.25rem;
+  --translate-6: 1.5rem;
+  --translate-7: 1.75rem;
+  --translate-8: 2rem;
+  --translate-9: 2.25rem;
+  --translate-10: 2.5rem;
+  --translate-11: 2.75rem;
+  --translate-12: 3rem;
+  --translate-14: 3.5rem;
+  --translate-16: 4rem;
+  --translate-20: 5rem;
+  --translate-24: 6rem;
+  --translate-28: 7rem;
+  --translate-32: 8rem;
+  --translate-36: 9rem;
+  --translate-40: 10rem;
+  --translate-44: 11rem;
+  --translate-48: 12rem;
+  --translate-52: 13rem;
+  --translate-56: 14rem;
+  --translate-60: 15rem;
+  --translate-64: 16rem;
+  --translate-72: 18rem;
+  --translate-80: 20rem;
+  --translate-96: 24rem;
+  --scale-0: 0;
+  --scale-50: 0.5;
+  --scale-75: 0.75;
+  --scale-90: 0.9;
+  --scale-95: 0.95;
+  --scale-100: 1;
+  --scale-105: 1.05;
+  --scale-110: 1.1;
+  --scale-125: 1.25;
+  --scale-150: 1.5;
+}
+
+@utility shadow-* {
+  box-shadow: --value(--shadow-*, [*]);
+}
+
+/* Direct, as in the v3 preset, so filter utilities are mutually exclusive. */
+@utility blur-* {
+  filter: blur(--value(--blur-*, [*]));
+}
+
+/* The encoder removes text-decoration-line; the shorthand is supported. */
+@utility underline {
+  text-decoration: underline;
+}
+@utility line-through {
+  text-decoration: line-through;
+}
+@utility no-underline {
+  text-decoration: none;
+}
+
+/* The encoder removes the logical shorthands v4 emits. */
+@utility px-* {
+  padding-left: calc(var(--spacing) * --value(number));
+  padding-left: --value([length], [percentage]);
+  padding-right: calc(var(--spacing) * --value(number));
+  padding-right: --value([length], [percentage]);
+}
+@utility py-* {
+  padding-top: calc(var(--spacing) * --value(number));
+  padding-top: --value([length], [percentage]);
+  padding-bottom: calc(var(--spacing) * --value(number));
+  padding-bottom: --value([length], [percentage]);
+}
+@utility my-* {
+  margin-top: calc(var(--spacing) * --value(number));
+  margin-top: --value([length], [percentage], 'auto');
+  margin-bottom: calc(var(--spacing) * --value(number));
+  margin-bottom: --value([length], [percentage], 'auto');
+}
+@utility mx-* {
+  margin-left: calc(var(--spacing) * --value(number));
+  margin-left: --value([length], [percentage], 'auto');
+  margin-right: calc(var(--spacing) * --value(number));
+  margin-right: --value([length], [percentage], 'auto');
+}
+@utility inset-* {
+  top: calc(var(--spacing) * --value(number));
+  top: --value([length], [percentage]);
+  right: calc(var(--spacing) * --value(number));
+  right: --value([length], [percentage]);
+  bottom: calc(var(--spacing) * --value(number));
+  bottom: --value([length], [percentage]);
+  left: calc(var(--spacing) * --value(number));
+  left: --value([length], [percentage]);
+}
+
+/* The encoder removes `rotate`, `translate` and `scale`, so they compose into
+ * `transform`. Own names, because the built-ins still emit plain values into
+ * --tw-translate-x and so on. Lynx custom properties always inherit, so `*` resets
+ * them, or a child would pick up its parent's transform. */
+* {
+  --lx-translate-x: translateX(0);
+  --lx-translate-y: translateY(0);
+  --lx-rotate-z: rotate(0deg);
+  --lx-skew-x: skewX(0deg);
+  --lx-skew-y: skewY(0deg);
+  --lx-scale-x: scaleX(1);
+  --lx-scale-y: scaleY(1);
+}
+@utility lynx-transform {
+  transform: var(--lx-translate-x) var(--lx-translate-y) var(--lx-rotate-z) var(--lx-skew-x) var(--lx-skew-y) var(--lx-scale-x) var(--lx-scale-y);
+}
+@utility rotate-* {
+  @apply lynx-transform;
+  --lx-rotate-z: rotate(--value(integer)deg);
+  --lx-rotate-z: rotate(--value([angle]));
+}
+@utility translate-x-* {
+  @apply lynx-transform;
+  --lx-translate-x: translateX(--value(--translate-*, [length], [percentage]));
+}
+@utility translate-y-* {
+  @apply lynx-transform;
+  --lx-translate-y: translateY(--value(--translate-*, [length], [percentage]));
+}
+@utility scale-* {
+  @apply lynx-transform;
+  --lx-scale-x: scaleX(--value(--scale-*, [number]));
+  --lx-scale-y: scaleY(--value(--scale-*, [number]));
+}
+@utility skew-x-* {
+  @apply lynx-transform;
+  --lx-skew-x: skewX(--value(integer)deg);
+  --lx-skew-x: skewX(--value([angle]));
+}
+@utility skew-y-* {
+  @apply lynx-transform;
+  --lx-skew-y: skewY(--value(integer)deg);
+  --lx-skew-y: skewY(--value([angle]));
+}
