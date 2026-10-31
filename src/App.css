@@ -1,6 +1,6 @@
 /* `@import "tailwindcss"` minus preflight (the v3 preset also disables it).
- * Layers are kept on purpose: lynx-postprocess.cjs unwraps them, and
- * `RAW=1 pnpm dev` skips that step to show what Lynx does with them.
+ * Layers are kept on purpose: lynx-postcss.cjs unwraps them, and `RAW=1` and
+ * `KEEP_LAYERS=1` skip that step to show what Lynx does with them.
  * source("./") limits scanning to src/: if v4 scans dist/, every build
  * output triggers another build. */
 @layer theme, base, components, utilities;

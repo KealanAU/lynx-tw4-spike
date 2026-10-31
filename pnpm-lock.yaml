@@ -27,9 +27,9 @@ importers:
       '@lynx-js/types':
         specifier: ^4.3.0
         version: 4.3.0
-      '@rsbuild/plugin-tailwindcss':
-        specifier: ^2.0.3
-        version: 2.0.3(@rsbuild/core@2.2.9)(@rspack/core@2.2.9(@swc/helpers@0.5.23))(webpack@5.112.0(cssnano@7.1.9(postcss@8.5.30))(csso@5.0.5)(lightningcss@1.32.0)(postcss@8.5.30)(svgo@4.1.0))
+      '@tailwindcss/postcss':
+        specifier: ^4.3.3
+        version: 4.3.3
       '@types/react':
         specifier: ^19.3.0
         version: 19.3.0
@@ -320,14 +320,6 @@ packages:
       '@rsbuild/core':
         optional: true
 
-  '@rsbuild/plugin-tailwindcss@2.0.3':
-    resolution: {integrity: sha512-sl7mN0fyoP0W+zEyFR2xEMVAS2cZPlOAqsXwI8Ei9tUSvV7V4G8Xw2WBVCOQ/B4KEFfJ6H1+TEuPlAzHLEfc4g==}
-    peerDependencies:
-      '@rsbuild/core': ^2.0.0
-    peerDependenciesMeta:
-      '@rsbuild/core':
-        optional: true
-
   '@rsdoctor/client@2.0.0':
     resolution: {integrity: sha512-gxtVkRkbJ+u/ZMlbac73cysgzqlA7cAQ8bwwHUqpfwu567Uzoe0JS4RGuZZt6eZjvM9VZkI9OLsmhlAuy4b3PQ==}
     engines: {node: ^20.19.0 || >=22.12.0}
@@ -544,16 +536,8 @@ packages:
     resolution: {integrity: sha512-krXjAikiaFSPaK/FkAQT5UTx3VormQaiZ5hBFlJZ9UFQGB/rwg1MZIhHAG9smMQRTdyJxP6Qt5MwMtdyU5FWrA==}
     engines: {node: '>= 20'}
 
-  '@tailwindcss/webpack@4.3.3':
-    resolution: {integrity: sha512-e7A7ubt+D+MzXAlQcOaDaHMD5oYzxULVdZVjLzGVStIXebGfD4RcVHxBSRP7xE+G8sS3o691zyfIbhm/veOLjQ==}
-    peerDependencies:
-      '@rspack/core': ^1.0.0 || ^2.0.0
-      webpack: ^5.0.0
-    peerDependenciesMeta:
-      '@rspack/core':
-        optional: true
-      webpack:
-        optional: true
+  '@tailwindcss/postcss@4.3.3':
+    resolution: {integrity: sha512-JTSZZGQi1AyKirbLN3azmjVzef92tcX7h+iSqPdaeStyFpGpDlKvvpxeOE8njhbUanbRwr3z8DyzhICWnMtQeg==}
 
   '@tybys/wasm-util@0.10.4':
     resolution: {integrity: sha512-W3c4gRigFS0T/Ma4qIYF3GDAc5AQdHb1yL5znJT1Zv1YaD9Kitx656wBjvr19qbiosmZT8lWDM5BEMynUqX65A==}
@@ -2064,15 +2048,6 @@ snapshots:
       - lightningcss
       - webpack
 
-  '@rsbuild/plugin-tailwindcss@2.0.3(@rsbuild/core@2.2.9)(@rspack/core@2.2.9(@swc/helpers@0.5.23))(webpack@5.112.0(cssnano@7.1.9(postcss@8.5.30))(csso@5.0.5)(lightningcss@1.32.0)(postcss@8.5.30)(svgo@4.1.0))':
-    dependencies:
-      '@tailwindcss/webpack': 4.3.3(@rspack/core@2.2.9(@swc/helpers@0.5.23))(webpack@5.112.0(cssnano@7.1.9(postcss@8.5.30))(csso@5.0.5)(lightningcss@1.32.0)(postcss@8.5.30)(svgo@4.1.0))
-    optionalDependencies:
-      '@rsbuild/core': 2.2.9
-    transitivePeerDependencies:
-      - '@rspack/core'
-      - webpack
-
   '@rsdoctor/client@2.0.0': {}
 
   '@rsdoctor/core@2.0.0(@rspack/core@2.2.9(@swc/helpers@0.5.23))(@types/node@26.6.5)':
@@ -2239,15 +2214,13 @@ snapshots:
       '@tailwindcss/oxide-win32-arm64-msvc': 4.3.3
       '@tailwindcss/oxide-win32-x64-msvc': 4.3.3
 
-  '@tailwindcss/webpack@4.3.3(@rspack/core@2.2.9(@swc/helpers@0.5.23))(webpack@5.112.0(cssnano@7.1.9(postcss@8.5.30))(csso@5.0.5)(lightningcss@1.32.0)(postcss@8.5.30)(svgo@4.1.0))':
+  '@tailwindcss/postcss@4.3.3':
     dependencies:
       '@alloc/quick-lru': 5.3.0
       '@tailwindcss/node': 4.3.3
       '@tailwindcss/oxide': 4.3.3
+      postcss: 8.5.30
       tailwindcss: 4.3.3
-    optionalDependencies:
-      '@rspack/core': 2.2.9(@swc/helpers@0.5.23)
-      webpack: 5.112.0(cssnano@7.1.9(postcss@8.5.30))(csso@5.0.5)(lightningcss@1.32.0)(postcss@8.5.30)(svgo@4.1.0)
 
   '@tybys/wasm-util@0.10.4':
     dependencies:
