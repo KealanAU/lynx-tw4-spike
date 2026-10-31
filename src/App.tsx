@@ -1,13 +1,4 @@
-import { useGlobalProps, useState } from '@lynx-js/react';
-
 import './App.css';
-
-// Lynx doesn't manage __globalProps; Explorer sets `theme` to Light or Dark.
-declare module '@lynx-js/types' {
-  interface GlobalProps {
-    theme?: string;
-  }
-}
 
 // Each row renders the Tailwind class next to a hand-written inline-style
 // reference. If the two boxes differ, the v4 output for that class doesn't
@@ -18,6 +9,8 @@ const BOX: Record<string, string> = {
   width: '48px',
   height: '48px',
   backgroundColor: '#3b82f6',
+  // Wide rows overflow, and shrinking would hide the width under test.
+  flexShrink: '0',
 };
 
 const without = (keys: Record<string, string>) =>
@@ -146,44 +139,6 @@ const VARIANTS = [
   },
 ];
 
-function ClassDarkRow() {
-  const { theme } = useGlobalProps();
-  const [dark, setDark] = useState(theme === 'Dark');
-  return (
-    <view className={dark ? 'theme-dark' : ''} style={{ marginTop: '20px' }}>
-      <view style={{ display: 'flex', alignItems: 'center' }}>
-        <view style={{ width: '160px' }}>
-          <text style={{ fontSize: '14px' }}>theme-dark:bg-[#ef4444]</text>
-          <text style={{ fontSize: '11px', color: '#888888' }}>
-            class on parent, starts from device theme
-          </text>
-        </view>
-        <view className='bg-[#3b82f6] theme-dark:bg-[#ef4444]' style={SIZE} />
-        <view
-          style={{
-            ...BOX,
-            backgroundColor: dark ? '#ef4444' : '#3b82f6',
-            marginLeft: '32px',
-          }}
-        />
-      </view>
-      <view
-        bindtap={() => setDark(!dark)}
-        style={{
-          marginTop: '12px',
-          padding: '12px',
-          backgroundColor: '#e5e7eb',
-          borderRadius: '8px',
-        }}
-      >
-        <text style={{ fontSize: '14px' }}>
-          Toggle: {dark ? 'dark' : 'light'} (device theme: {theme ?? 'not set'})
-        </text>
-      </view>
-    </view>
-  );
-}
-
 export function App() {
   return (
     <scroll-view scroll-orientation='vertical' style={{ height: '100%' }}>
@@ -228,7 +183,6 @@ export function App() {
             <view style={{ ...BOX, backgroundColor: ref, marginLeft: '32px' }} />
           </view>
         ))}
-        <ClassDarkRow />
         <view style={{ marginTop: '20px' }}>
           <text className='text-lg'>text-lg (font-size + calc line-height)</text>
           <text style={{ fontSize: '18px', lineHeight: '28px' }}>

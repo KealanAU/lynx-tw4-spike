@@ -1,3 +1,5 @@
+import { pluginTailwindcss } from '@rsbuild/plugin-tailwindcss';
+
 import { pluginLynxConfig } from '@lynx-js/config-rsbuild-plugin';
 import { pluginQRCode } from '@lynx-js/qrcode-rsbuild-plugin';
 import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
@@ -17,6 +19,7 @@ export default defineConfig({
         return `${url}?fullscreen=true`;
       },
     }),
+    pluginTailwindcss(),
     // Same flags as examples/tailwindcss, so failures are v4's, not config's.
     pluginLynxConfig({
       enableCSSInlineVariables: true,
