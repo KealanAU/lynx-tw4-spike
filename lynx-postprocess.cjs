@@ -29,8 +29,15 @@ module.exports = function lynxPostprocess(source) {
     const kept = rule.selectors.filter(
       (s) => !UNSUPPORTED_CLASSES.has(s) && !UNSUPPORTED_SELECTOR.test(s),
     );
-    if (kept.length) rule.selectors = kept;
-    else rule.remove();
+    // Lightning CSS merges rules with identical declarations, and the Lynx
+    // encoder drops a whole rule if any one of its selectors is unsupported.
+    for (const selector of kept) {
+      // The encoder rejects :is(), which the `*:` variant compiles to.
+      // ponytail: only a whole-selector :is() with one simple argument; other
+      // forms stay as they are and still show the encoder's warning.
+      rule.cloneBefore({ selector: selector.replace(/^:is\(([^(),]+)\)$/, '$1') });
+    }
+    rule.remove();
   });
 
   return root.toString();

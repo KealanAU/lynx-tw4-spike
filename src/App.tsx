@@ -90,6 +90,53 @@ const CASES: { tw: string; ref: Record<string, string>; probes: string }[] = [
   },
 ];
 
+// Each variant box should match the reference beside it, red (#ef4444) unless
+// `ref` says otherwise. Blue comes from a class, not inline style, so the
+// variant can override it. Class names are written out in full because Tailwind
+// only generates classes it finds as complete strings in the source.
+const SIZE = { width: '48px', height: '48px' };
+const VARIANTS = [
+  {
+    name: 'max-sm:bg-[#ef4444]',
+    probes: '@media (width < 40rem)',
+    el: <view className='bg-[#3b82f6] max-sm:bg-[#ef4444]' style={SIZE} />,
+  },
+  {
+    name: 'sm:bg-[#ef4444] (stays blue)',
+    probes: '@media (width >= 40rem), phone is narrower',
+    el: <view className='bg-[#3b82f6] sm:bg-[#ef4444]' style={SIZE} />,
+    ref: '#3b82f6',
+  },
+  {
+    name: 'first:bg-[#ef4444]',
+    probes: ':first-child',
+    el: (
+      <view style={SIZE}>
+        <view className='bg-[#3b82f6] first:bg-[#ef4444]' style={SIZE} />
+      </view>
+    ),
+  },
+  {
+    name: '*:bg-[#ef4444]',
+    probes: ':is(.x > *) child variant',
+    el: (
+      <view className='*:bg-[#ef4444]' style={SIZE}>
+        <view className='bg-[#3b82f6]' style={SIZE} />
+      </view>
+    ),
+  },
+  {
+    name: 'active:bg-[#ef4444]',
+    probes: ':active, press and hold',
+    el: <view className='bg-[#3b82f6] active:bg-[#ef4444]' style={SIZE} />,
+  },
+  {
+    name: 'dark:bg-[#ef4444]',
+    probes: 'prefers-color-scheme, toggle sim dark mode',
+    el: <view className='bg-[#3b82f6] dark:bg-[#ef4444]' style={SIZE} />,
+  },
+];
+
 export function App() {
   return (
     <scroll-view scroll-orientation='vertical' style={{ height: '100%' }}>
@@ -114,6 +161,24 @@ export function App() {
             </view>
             <view className={tw} style={without(ref)} />
             <view style={{ ...BOX, ...ref, marginLeft: '32px' }} />
+          </view>
+        ))}
+        <text style={{ fontSize: '12px', color: '#666666', marginTop: '32px' }}>
+          variants: left should match right
+        </text>
+        {VARIANTS.map(({ name, probes, el, ref = '#ef4444' }) => (
+          <view
+            key={name}
+            style={{ display: 'flex', alignItems: 'center', marginTop: '20px' }}
+          >
+            <view style={{ width: '160px' }}>
+              <text style={{ fontSize: '14px' }}>{name}</text>
+              <text style={{ fontSize: '11px', color: '#888888' }}>
+                {probes}
+              </text>
+            </view>
+            {el}
+            <view style={{ ...BOX, backgroundColor: ref, marginLeft: '32px' }} />
           </view>
         ))}
         <view style={{ marginTop: '20px' }}>

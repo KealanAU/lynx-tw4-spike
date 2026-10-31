@@ -44,6 +44,9 @@ export default defineConfig({
     pluginLynxConfig({
       enableCSSInlineVariables: true,
       enableCSSInheritance: true,
+      // Off by default because it also changes how @supports and @layer decode,
+      // which could shift the other rows' results. @media needs it (Lynx 4.0+).
+      enableCSSRule: Boolean(process.env['CSS_RULE']),
     }),
   ],
 });

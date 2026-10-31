@@ -13,14 +13,16 @@
   --color-red-500: #ef4444;
 }
 
-/* Lynx can't resolve calc() inside a custom property, so transform steps are
- * plain theme values. `inline` writes the value itself into --tw-*, not a
- * var() pointing at the theme variable.
+/* Lynx can't resolve calc() inside a custom property, so transform steps and
+ * text-lg are plain theme values. `inline` writes the value itself into the
+ * utility, not a var() pointing at the theme variable.
  * ponytail: only the steps the spike uses; the preset ships full scales. */
 @theme inline {
   --rotate-45: 45deg;
   --scale-50: 0.5;
   --translate-4: 1rem;
+  --text-lg: 1.125rem;
+  --text-lg--line-height: 1.75rem;
 }
 
 /* Lynx drops the `rotate`/`translate`/`scale` properties v4 emits, so these
