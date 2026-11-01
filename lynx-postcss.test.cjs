@@ -2,7 +2,13 @@ const assert = require('node:assert');
 const { readFileSync } = require('node:fs');
 const { join } = require('node:path');
 
-const { rejected, replaceOklch, rewriteSelector, unmatchable } = require('./lynx-postcss.cjs');
+const { lostOpacity, rejected, replaceOklch, rewriteSelector, unmatchable } = require('./lynx-postcss.cjs');
+
+const MIX = 'color-mix(in oklab, var(--x) 50%, transparent)';
+assert.ok(lostOpacity('var(--x)', MIX));
+assert.ok(!lostOpacity('#ff880080', MIX));
+assert.ok(!lostOpacity(undefined, MIX));
+assert.ok(!lostOpacity('var(--x)', 'to right in oklch'));
 
 for (const selector of ['.x:has(.y)', '.x:is(.a ~ *):is(.b *)', ':where(.a:not(.b)) .c', '.x::file-selector-button']) {
   assert.ok(rejected(selector), selector);

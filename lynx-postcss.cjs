@@ -2,8 +2,12 @@ const OKLCH =
   /oklch\(\s*([\d.]+)(%?)\s+([\d.]+)\s+(-?[\d.]+|none)(?:deg)?\s*(?:\/\s*([\d.]+)(%?)\s*)?\)/g;
 
 // Lightning CSS leaves oklch() alone because its targets support it; Lynx's colour
-// parser doesn't.
-const UNSUPPORTED_COLOUR = /\b(?:ok)?(?:lab|lch)\(|\bcolor(?:-mix)?\(|\blight-dark\(/;
+// parser doesn't. rebeccapurple is the one CSS colour name missing from its keywords.
+const UNSUPPORTED_COLOUR = /\b(?:ok)?(?:lab|lch)\(|\bcolor(?:-mix)?\(|\blight-dark\(|\brebeccapurple\b/;
+
+// Tailwind can't resolve a colour that's only a var(), so its /opacity fallback has no alpha.
+const lostOpacity = (fallback, value) =>
+  value.includes('color-mix(') && /^var\(--[\w-]+\)$/.test(fallback ?? '');
 
 const APPLIES = /^:(?:not|hover|active|focus|root|before|after)$/;
 
@@ -98,9 +102,18 @@ module.exports = () => ({
       else rule.remove();
     });
 
+    const fallbacks = new Map();
     root.walkDecls(decl => {
       if (decl.value.includes('oklch(')) decl.value = replaceOklch(decl.value);
-      if (UNSUPPORTED_COLOUR.test(decl.value) && !inSupports(decl)) {
+      const key = `${decl.parent.selector} ${decl.prop}`;
+      if (inSupports(decl)) {
+        if (lostOpacity(fallbacks.get(key), decl.value)) {
+          problems.push(`the opacity in ${decl.parent.selector}, which renders solid`);
+        }
+        return;
+      }
+      fallbacks.set(key, decl.value);
+      if (UNSUPPORTED_COLOUR.test(decl.value)) {
         problems.push(`the colour in ${decl.prop}: ${decl.value}`);
       }
     });
@@ -112,4 +125,4 @@ module.exports = () => ({
   },
 });
 module.exports.postcss = true;
-Object.assign(module.exports, { rejected, replaceOklch, rewriteSelector, unmatchable });
+Object.assign(module.exports, { lostOpacity, rejected, replaceOklch, rewriteSelector, unmatchable });

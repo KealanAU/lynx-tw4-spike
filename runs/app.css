@@ -5,4 +5,33 @@
 @theme {
   --color-brand: oklch(62.8% 0.2577 29.23);
   --spacing-brand: 2rem;
+
+  --color-pal-hex: #ff8800;
+  --color-pal-short: #f80;
+  --color-pal-hex8: #ff880080;
+  --color-pal-rgb: rgb(255 136 0);
+  --color-pal-rgb-comma: rgb(255, 136, 0);
+  --color-pal-rgb-alpha: rgb(255 136 0 / 0.5);
+  --color-pal-hsl: hsl(30 100% 50%);
+  --color-pal-hsl-comma: hsl(30, 100%, 50%);
+  --color-pal-named: rebeccapurple;
+  --color-pal-orchid: mediumorchid;
+  --color-pal-chroma-pct: oklch(62.8% 64.425% 29.23);
+  --color-pal-alias: var(--color-brand);
+}
+
+/* The shape component kits generate: tokens on :root, swapped by a theme class, and
+ * exposed to Tailwind through @theme inline. */
+:root {
+  --pal-token: #ff8800;
+  --pal-token-oklch: oklch(62.8% 0.2577 29.23);
+  --pal-themed: #ff8800;
+}
+.dark {
+  --pal-themed: #ff0000;
+}
+@theme inline {
+  --color-pal-token: var(--pal-token);
+  --color-pal-token-oklch: var(--pal-token-oklch);
+  --color-pal-themed: var(--pal-themed);
 }

@@ -112,6 +112,46 @@ const V4_TEXTS: { tw: string; ref: Style; probes: string }[] = [
   { tw: 'italic', ref: { fontStyle: 'italic' }, probes: 'v3 matrix, --tw var?' },
 ];
 
+const ORANGE = '#ff8800';
+const ORANGE_50 = 'rgba(255, 136, 0, 0.5)';
+
+const PALETTE_BOXES: { tw: string; ref: Style; probes: string }[] = [
+  { tw: 'bg-pal-hex', ref: { backgroundColor: ORANGE }, probes: '#rrggbb' },
+  { tw: 'bg-pal-short', ref: { backgroundColor: ORANGE }, probes: '#rgb' },
+  { tw: 'bg-pal-hex8', ref: { backgroundColor: ORANGE_50 }, probes: '#rrggbbaa' },
+  { tw: 'bg-pal-rgb', ref: { backgroundColor: ORANGE }, probes: 'rgb(r g b)' },
+  { tw: 'bg-pal-rgb-comma', ref: { backgroundColor: ORANGE }, probes: 'rgb(r, g, b)' },
+  { tw: 'bg-pal-rgb-alpha', ref: { backgroundColor: ORANGE_50 }, probes: 'rgb(r g b / a)' },
+  { tw: 'bg-pal-hsl', ref: { backgroundColor: '#ff8000' }, probes: 'hsl(h s l)' },
+  { tw: 'bg-pal-hsl-comma', ref: { backgroundColor: '#ff8000' }, probes: 'hsl(h, s, l)' },
+  { tw: 'bg-pal-named', ref: { backgroundColor: '#663399' }, probes: 'rebeccapurple' },
+  { tw: 'bg-pal-orchid', ref: { backgroundColor: '#ba55d3' }, probes: 'another named colour' },
+  { tw: 'bg-pal-chroma-pct', ref: { backgroundColor: '#ff0000' }, probes: 'oklch() with chroma %' },
+  { tw: 'bg-pal-alias', ref: { backgroundColor: '#ff0000' }, probes: 'var() to another token' },
+  { tw: 'bg-pal-token', ref: { backgroundColor: ORANGE }, probes: '@theme inline over :root' },
+  { tw: 'bg-pal-token-oklch', ref: { backgroundColor: '#ff0000' }, probes: 'same, oklch() on :root' },
+  { tw: 'bg-pal-hex/50', ref: { backgroundColor: ORANGE_50 }, probes: '/opacity on hex' },
+  { tw: 'bg-pal-rgb/50', ref: { backgroundColor: ORANGE_50 }, probes: '/opacity on rgb()' },
+  { tw: 'bg-pal-hsl/50', ref: { backgroundColor: 'rgba(255, 128, 0, 0.5)' }, probes: '/opacity on hsl()' },
+  { tw: 'bg-pal-named/50', ref: { backgroundColor: 'rgba(102, 51, 153, 0.5)' }, probes: '/opacity on a name' },
+  { tw: 'bg-pal-alias/50', ref: { backgroundColor: 'rgba(255, 0, 0, 0.5)' }, probes: '/opacity on an alias' },
+  { tw: 'bg-pal-token/50', ref: { backgroundColor: ORANGE_50 }, probes: '/opacity on a :root token' },
+  { tw: 'border-2 border-pal-token', ref: { borderWidth: '2px', borderStyle: 'solid', borderColor: ORANGE }, probes: 'border, :root token' },
+  { tw: 'bg-linear-to-r from-pal-token to-pal-orchid', ref: gradient(`linear-gradient(to right, ${ORANGE}, #ba55d3)`), probes: 'gradient, mixed tokens' },
+];
+
+const PALETTE_TEXTS: { tw: string; ref: Style; probes: string }[] = [
+  { tw: 'text-pal-token', ref: { color: ORANGE }, probes: 'text, :root token' },
+  { tw: 'text-pal-hsl', ref: { color: '#ff8000' }, probes: 'text, hsl()' },
+];
+
+const PALETTE_THEMED = 'bg-pal-themed';
+const PALETTE = new Set([
+  ...PALETTE_BOXES.map(({ tw }) => tw),
+  ...PALETTE_TEXTS.map(({ tw }) => tw),
+  PALETTE_THEMED,
+]);
+
 const ROW = { display: 'flex', flexDirection: 'row' };
 const LAYOUTS: { tw: string; ref: Style; probes: string }[] = [
   { tw: 'flex flex-row', ref: ROW, probes: 'control' },
@@ -146,6 +186,8 @@ const KNOWN_PROBLEMS = new Set([
   'has-[.on]:bg-[#ef4444]',
   '@[1px]:bg-[#ef4444]',
   'starting:bg-[#ef4444]',
+  'bg-pal-named',
+  'bg-pal-token/50',
 ]);
 
 const NEW_NAMES = [
@@ -162,6 +204,7 @@ const TESTING = new Set([
   ...V4_BOXES.map(({ tw }) => tw),
   ...V4_TEXTS.map(({ tw }) => tw),
   ...NEW_NAMES,
+  ...PALETTE,
   'group-[.on]:bg-[#ef4444]',
   'group-active:bg-[#ef4444]',
   'group-active, parent has background',
@@ -185,8 +228,9 @@ const TESTING = new Set([
 ]);
 
 const TABS = {
+  Palette: (name: string) => PALETTE.has(name),
   New: (name: string) => NEW.has(name),
-  Testing: (name: string) => TESTING.has(name) && !NEW.has(name),
+  Testing: (name: string) => TESTING.has(name) && !NEW.has(name) && !PALETTE.has(name),
   Known: (name: string) => KNOWN_PROBLEMS.has(name),
   All: (_name: string) => true,
 };
@@ -259,7 +303,7 @@ export function App() {
   const theme = useGlobalProps().theme ?? 'unset';
   const isDark = theme.toLowerCase() === 'dark';
   const darkExpected = isDark ? RED : BLUE;
-  const [tab, setTab] = useState<TabName>('New');
+  const [tab, setTab] = useState<TabName>('Palette');
 
   return (
     <scroll-view scroll-orientation='vertical' style={{ height: '100%' }}>
@@ -386,6 +430,16 @@ export function App() {
         <Heading>v4 features: left is the class, right is inline</Heading>
         <BoxGrid items={V4_BOXES} />
         <TextGrid items={V4_TEXTS} />
+
+        <Heading>{`app palette: left is the class, right is inline (theme ${theme})`}</Heading>
+        <BoxGrid items={PALETTE_BOXES} />
+        <TextGrid items={PALETTE_TEXTS} />
+        <Grid>
+          <Tile name={PALETTE_THEMED} probes='token swapped by .dark'>
+            <view className='bg-pal-themed' style={without({ backgroundColor: RED })} />
+            <Reference color={isDark ? '#ff0000' : ORANGE} />
+          </Tile>
+        </Grid>
 
         <Heading>v4 variants: left matches right</Heading>
         <Grid>
