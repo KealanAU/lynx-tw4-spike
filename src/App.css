@@ -1,8 +1,8 @@
 /* No preflight, as in the v3 preset, and no layer(), because SDKs below 4.2
  * discard rules inside @layer. */
 @import "tailwindcss/theme.css";
-@import "./palette.css";
 @import "tailwindcss/utilities.css" source("./");
+@import "../runs/app.css";
 
 /* calc() inside a custom property has no effect on line height. */
 @theme {
@@ -25,6 +25,14 @@
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
   --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
   --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+  --inset-shadow-2xs: inset 0 1px rgb(0 0 0 / 0.05);
+  --inset-shadow-xs: inset 0 1px 1px rgb(0 0 0 / 0.05);
+  --inset-shadow-sm: inset 0 2px 4px rgb(0 0 0 / 0.05);
+  --text-shadow-2xs: 0px 1px 0px rgb(0 0 0 / 0.15);
+  --text-shadow-xs: 0px 1px 1px rgb(0 0 0 / 0.2);
+  --text-shadow-sm: 0px 1px 0px rgb(0 0 0 / 0.075), 0px 1px 1px rgb(0 0 0 / 0.075), 0px 2px 2px rgb(0 0 0 / 0.075);
+  --text-shadow-md: 0px 1px 1px rgb(0 0 0 / 0.1), 0px 1px 2px rgb(0 0 0 / 0.1), 0px 2px 4px rgb(0 0 0 / 0.1);
+  --text-shadow-lg: 0px 1px 2px rgb(0 0 0 / 0.1), 0px 3px 2px rgb(0 0 0 / 0.1), 0px 4px 8px rgb(0 0 0 / 0.1);
   --blur-xs: 4px;
   --blur-sm: 8px;
   --blur-md: 12px;
@@ -94,6 +102,43 @@
   box-shadow: --value(--shadow-*, [*]);
 }
 
+/* Written directly like shadow-*, so these replace each other instead of composing.
+ * #000 because Lynx's colour parser has no currentcolor. */
+@utility inset-shadow-* {
+  box-shadow: --value(--inset-shadow-*);
+  box-shadow: inset --value([*]);
+}
+@utility inset-ring {
+  box-shadow: inset 0 0 0 1px var(--tw-inset-ring-color, #000);
+}
+@utility inset-ring-* {
+  box-shadow: inset 0 0 0 --value(integer)px var(--tw-inset-ring-color, #000);
+}
+@utility text-shadow-* {
+  text-shadow: --value(--text-shadow-*, [*]);
+}
+
+/* A view with only layout styles gets no native view, so it never receives :active and
+ * group-active:* can't fire. Any other property fixes that; visibility is the one least
+ * likely to collide with a class on the same element. */
+/* ponytail: bare `group` only. `group/name` needs its parent styled by hand, until a
+ * functional @utility is worth it. */
+@utility group {
+  visibility: visible;
+}
+
+/* The built-ins default the position to `in oklab`, with no @supports fallback as
+ * bg-linear-* has, and Lynx's gradient parser rejects it. */
+@utility bg-radial {
+  --tw-gradient-position: ellipse at center;
+}
+@utility bg-conic {
+  --tw-gradient-position: from 0deg;
+}
+@utility bg-conic-* {
+  --tw-gradient-position: from --value(integer)deg;
+}
+
 /* Direct, as in the v3 preset, so filter utilities are mutually exclusive. */
 @utility blur-* {
   filter: blur(--value(--blur-*, [*]));
@@ -153,6 +198,9 @@
 * {
   --lx-translate-x: translateX(0);
   --lx-translate-y: translateY(0);
+  --lx-translate-z: translateZ(0);
+  --lx-rotate-x: rotateX(0deg);
+  --lx-rotate-y: rotateY(0deg);
   --lx-rotate-z: rotate(0deg);
   --lx-skew-x: skewX(0deg);
   --lx-skew-y: skewY(0deg);
@@ -160,7 +208,21 @@
   --lx-scale-y: scaleY(1);
 }
 @utility lynx-transform {
-  transform: var(--lx-translate-x) var(--lx-translate-y) var(--lx-rotate-z) var(--lx-skew-x) var(--lx-skew-y) var(--lx-scale-x) var(--lx-scale-y);
+  transform: var(--lx-translate-x) var(--lx-translate-y) var(--lx-translate-z) var(--lx-rotate-x) var(--lx-rotate-y) var(--lx-rotate-z) var(--lx-skew-x) var(--lx-skew-y) var(--lx-scale-x) var(--lx-scale-y);
+}
+@utility rotate-x-* {
+  @apply lynx-transform;
+  --lx-rotate-x: rotateX(--value(integer)deg);
+  --lx-rotate-x: rotateX(--value([angle]));
+}
+@utility rotate-y-* {
+  @apply lynx-transform;
+  --lx-rotate-y: rotateY(--value(integer)deg);
+  --lx-rotate-y: rotateY(--value([angle]));
+}
+@utility translate-z-* {
+  @apply lynx-transform;
+  --lx-translate-z: translateZ(--value(--translate-*, [length]));
 }
 @utility rotate-* {
   @apply lynx-transform;

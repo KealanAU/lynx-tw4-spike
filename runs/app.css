@@ -1,0 +1,8 @@
+/* What an app would add on top of the preset. */
+@plugin "./plugin.cjs";
+@config "./tailwind.config.cjs";
+
+@theme {
+  --color-brand: oklch(62.8% 0.2577 29.23);
+  --spacing-brand: 2rem;
+}
