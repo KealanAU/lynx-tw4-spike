@@ -1,0 +1,31 @@
+/* Every family the v3 matrix supports, with sample values. Run it with CSS_RULE=0, the
+ * only path where the encoder reports removed properties (row 6). Built-ins still emit
+ * what src/App.css overrides, so those properties appear here too. */
+@import "../src/App.css";
+
+@source inline("aspect-{square,video} box-{border,content} flex grid hidden overflow-{hidden,visible} overflow-{x,y}-{hidden,visible}");
+@source inline("fixed absolute relative sticky visible invisible z-{0,10,50} -z-10");
+@source inline("{inset,inset-x,inset-y,top,right,bottom,left,start,end}-{0,2,px,1/2,full,auto,[3px]} -{inset,inset-x,inset-y,top,right,bottom,left,start,end}-2");
+
+@source inline("basis-{0,2,1/2,full,auto} flex-{row,row-reverse,col,col-reverse} flex-{wrap,wrap-reverse,nowrap} flex-{1,auto,initial,none} grow grow-0 shrink shrink-0 order-{1,first,last} -order-1");
+@source inline("grid-cols-{1..12} grid-rows-{1..12} col-{start,end}-2 -col-{start,end}-2 col-{auto,span-2} row-{start,end}-2 -row-{start,end}-2 row-{auto,span-2}");
+@source inline("grid-flow-{row,col,dense,row-dense,col-dense} auto-cols-{auto,max,fr} auto-rows-{auto,max,fr} gap-2 gap-{x,y}-2");
+@source inline("justify-{start,end,center,between,around,evenly,stretch} justify-items-{start,end,center,stretch} justify-self-{auto,start,end,center,stretch}");
+@source inline("content-{start,end,center,between,around,stretch} items-{start,end,center,baseline,stretch} self-{auto,start,end,center,stretch,baseline}");
+
+@source inline("{p,px,py,ps,pe,pt,pr,pb,pl}-{0,2,px,[3px]} {m,mx,my,ms,me,mt,mr,mb,ml}-{0,2,px,auto,[3px]} -{m,mx,my,ms,me,mt,mr,mb,ml}-2");
+@source inline("{w,min-w,max-w,h,min-h,max-h,size}-{0,2,px,1/2,full,[3px]}");
+
+@source inline("font-{sans,serif,mono} text-{xs,sm,base,lg,xl,2xl,3xl} italic not-italic font-{thin,normal,bold} tracking-{tight,wide} -tracking-[1px] leading-{none,tight,6}");
+@source inline("text-{left,center,right,start,end} text-red-500 underline line-through no-underline truncate text-{ellipsis,clip} indent-2 -indent-2 align-{top,middle,bottom,baseline}");
+@source inline("whitespace-{normal,nowrap} break-{normal,all}");
+
+@source inline("bg-clip-{border,padding,content} bg-red-500 bg-origin-{border,padding,content} bg-{bottom,center,left,left-bottom,left-top,right,right-bottom,right-top,top}");
+@source inline("bg-{repeat,no-repeat,repeat-x,repeat-y,repeat-round,repeat-space} bg-{auto,cover,contain} bg-none");
+@source inline("rounded rounded-{s,e,t,r,b,l,ss,se,ee,es,tl,tr,br,bl} rounded-{sm,lg,full} rounded-{s,e,t,r,b,l,ss,se,ee,es,tl,tr,br,bl}-lg");
+@source inline("border border-{x,y,s,e,t,r,b,l} border-2 border-{x,y,s,e,t,r,b,l}-2 border-red-500 border-{x,y,s,e,t,r,b,l}-red-500 border-{solid,dashed,dotted,double,none}");
+
+@source inline("shadow shadow-{sm,md,lg,xl,2xl,inner,none} opacity-{0,50,100} blur blur-{0,none,sm,md,lg,xl,2xl,3xl} grayscale grayscale-{0,25,50,75,none}");
+@source inline("transition transition-{none,all,colors,opacity,transform,color,filter,background-color,border-color} duration-{100,1000} ease-{linear,in,out,in-out} delay-100 animate-{spin,pulse}");
+@source inline("scale-{50,100} scale-{x,y}-50 -scale-50 -scale-{x,y}-50 rotate-45 rotate-{x,y,z}-45 -rotate-45 -rotate-{x,y,z}-45 translate-{x,y,z}-2 -translate-{x,y,z}-2 skew-{x,y}-12 -skew-{x,y}-12 origin-{center,top,left,top-left}");
+@source inline("caret-red-500");

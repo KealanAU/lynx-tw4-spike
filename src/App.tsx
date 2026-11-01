@@ -93,11 +93,23 @@ const V4_BOXES: { tw: string; ref: Style; probes: string }[] = [
   { tw: 'inset-ring-2 inset-ring-red-500', ref: { boxShadow: 'inset 0 0 0 2px #fb2c36' }, probes: 'colour var' },
   { tw: 'mask-none', ref: { maskImage: 'none' }, probes: 'both vanish, web keeps them' },
   { tw: 'mask-[linear-gradient(to_right,#000,transparent)]', ref: { maskImage: 'linear-gradient(to right, #000, transparent)' }, probes: 'arbitrary mask-image' },
+  { tw: 'my-2', ref: { marginTop: '0.5rem', marginBottom: '0.5rem' }, probes: 'override, had no tile' },
+  { tw: 'translate-y-2', ref: { transform: 'translateY(0.5rem)' }, probes: 'override, had no tile' },
+  { tw: 'skew-y-12', ref: { transform: 'skewY(12deg)' }, probes: 'override, had no tile' },
+  { tw: 'rotate-z-45', ref: { transform: 'rotateZ(45deg)' }, probes: 'v3 matrix, no override' },
+  { tw: 'scale-x-50', ref: { transform: 'scaleX(0.5)' }, probes: 'v3 matrix, no override' },
+  { tw: '-rotate-45', ref: { transform: 'rotate(-45deg)' }, probes: 'v3 matrix, no override' },
+  { tw: '-translate-x-4', ref: { transform: 'translateX(-1rem)' }, probes: 'v3 matrix, no override' },
+  { tw: '-skew-x-12', ref: { transform: 'skewX(-12deg)' }, probes: 'v3 matrix, no override' },
+  { tw: 'grayscale', ref: { filter: 'grayscale(100%)' }, probes: 'v3 matrix, `filter` var list' },
+  { tw: 'origin-top-left rotate-45', ref: { transformOrigin: 'top left', transform: 'rotate(45deg)' }, probes: 'v3 matrix' },
 ];
 
 const V4_TEXTS: { tw: string; ref: Style; probes: string }[] = [
   { tw: 'text-shadow-md', ref: { textShadow: '0px 1px 1px rgba(0, 0, 0, 0.1), 0px 1px 2px rgba(0, 0, 0, 0.1), 0px 2px 4px rgba(0, 0, 0, 0.1)' }, probes: 'theme value' },
   { tw: 'text-shadow-[0_2px_2px_#ff0000]', ref: { textShadow: '0 2px 2px #ff0000' }, probes: 'arbitrary value' },
+  { tw: 'line-through', ref: { textDecoration: 'line-through' }, probes: 'override, had no tile' },
+  { tw: 'italic', ref: { fontStyle: 'italic' }, probes: 'v3 matrix, --tw var?' },
 ];
 
 const ROW = { display: 'flex', flexDirection: 'row' };
@@ -109,6 +121,9 @@ const LAYOUTS: { tw: string; ref: Style; probes: string }[] = [
   { tw: 'flex flex-row p-2', ref: { ...ROW, padding: '0.5rem' }, probes: 'padding' },
   { tw: 'flex flex-row px-2', ref: { ...ROW, paddingLeft: '0.5rem', paddingRight: '0.5rem' }, probes: 'padding-inline' },
   { tw: 'flex flex-row py-2', ref: { ...ROW, paddingTop: '0.5rem', paddingBottom: '0.5rem' }, probes: 'padding-block' },
+  { tw: 'flex flex-row ps-2', ref: { ...ROW, paddingLeft: '0.5rem' }, probes: 'v3 matrix, no override' },
+  { tw: 'flex flex-row pe-2', ref: { ...ROW, paddingRight: '0.5rem' }, probes: 'v3 matrix, no override' },
+  { tw: 'flex flex-row gap-x-2', ref: { ...ROW, columnGap: '0.5rem' }, probes: 'v3 matrix' },
   { tw: 'flex flex-row space-x-2', ref: { ...ROW, gap: '0.5rem' }, probes: ':where(> :not())' },
   { tw: 'grid grid-cols-2', ref: { display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }, probes: 'grid' },
 ];
@@ -133,11 +148,20 @@ const KNOWN_PROBLEMS = new Set([
   'starting:bg-[#ef4444]',
 ]);
 
+const NEW_NAMES = [
+  'my-2', 'translate-y-2', 'skew-y-12', 'rotate-z-45', 'scale-x-50', '-rotate-45', '-translate-x-4', '-skew-x-12',
+  'grayscale', 'origin-top-left rotate-45', 'line-through', 'italic',
+  'flex flex-row ps-2', 'flex flex-row pe-2', 'flex flex-row gap-x-2',
+  'absolute inset-1', 'text-red-500 on a parent',
+];
+const NEW = new Set(NEW_NAMES);
+
 // The new tiles, plus the old ones this change could break: colours lost the generated
 // palette, and transforms gained the 3D functions.
 const TESTING = new Set([
   ...V4_BOXES.map(({ tw }) => tw),
   ...V4_TEXTS.map(({ tw }) => tw),
+  ...NEW_NAMES,
   'group-[.on]:bg-[#ef4444]',
   'group-active:bg-[#ef4444]',
   'group-active, parent has background',
@@ -161,7 +185,8 @@ const TESTING = new Set([
 ]);
 
 const TABS = {
-  Testing: (name: string) => TESTING.has(name),
+  New: (name: string) => NEW.has(name),
+  Testing: (name: string) => TESTING.has(name) && !NEW.has(name),
   Known: (name: string) => KNOWN_PROBLEMS.has(name),
   All: (_name: string) => true,
 };
@@ -234,7 +259,7 @@ export function App() {
   const theme = useGlobalProps().theme ?? 'unset';
   const isDark = theme.toLowerCase() === 'dark';
   const darkExpected = isDark ? RED : BLUE;
-  const [tab, setTab] = useState<TabName>('Testing');
+  const [tab, setTab] = useState<TabName>('New');
 
   return (
     <scroll-view scroll-orientation='vertical' style={{ height: '100%' }}>
@@ -364,6 +389,22 @@ export function App() {
 
         <Heading>v4 variants: left matches right</Heading>
         <Grid>
+          <Tile name='absolute inset-1' probes='override, had no tile'>
+            <view className='relative' style={SIZE}>
+              <view className='absolute inset-1' style={{ backgroundColor: BLUE }} />
+            </view>
+            <view style={{ ...SIZE, ...GAP, position: 'relative' }}>
+              <view style={{ position: 'absolute', top: '0.25rem', right: '0.25rem', bottom: '0.25rem', left: '0.25rem', backgroundColor: BLUE }} />
+            </view>
+          </Tile>
+          <Tile name='text-red-500 on a parent' probes='needs enableCSSInheritance?'>
+            <view className='text-red-500' style={TEXT}>
+              <text>Ag xy</text>
+            </view>
+            <view style={{ ...TEXT, marginLeft: '6px' }}>
+              <text style={{ color: '#fb2c36' }}>Ag xy</text>
+            </view>
+          </Tile>
           <Tile name='hover:bg-[#ef4444]' probes='@media (hover: hover), never fires on touch'>
             <view className='bg-[#3b82f6] hover:bg-[#ef4444]' style={SIZE} />
             <Reference color={BLUE} />
@@ -425,13 +466,13 @@ export function App() {
             </view>
             <Reference />
           </Tile>
-          <Tile name='@[1px]:bg-[#ef4444]' probes='removed, expect blue'>
+          <Tile name='@[1px]:bg-[#ef4444]' probes='no @container, expect blue'>
             <view className='@container' style={SIZE}>
               <view className='bg-[#3b82f6] @[1px]:bg-[#ef4444]' style={SIZE} />
             </view>
             <Reference />
           </Tile>
-          <Tile name='starting:bg-[#ef4444]' probes='removed, stays blue'>
+          <Tile name='starting:bg-[#ef4444]' probes='no @starting-style, stays blue'>
             <view className='bg-[#3b82f6] starting:bg-[#ef4444]' style={SIZE} />
             <Reference color={BLUE} />
           </Tile>

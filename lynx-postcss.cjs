@@ -79,9 +79,10 @@ function inSupports(node) {
 module.exports = () => ({
   postcssPlugin: 'lynx-tailwind-v4',
   OnceExit(root, { result }) {
+    const problems = [];
+
     root.walkAtRules(/^(?:container|starting-style)$/, rule => {
-      rule.warn(result, `Lynx has no @${rule.name}, so these rules were removed`);
-      rule.remove();
+      problems.push(`@${rule.name} ${rule.params}`.trim());
     });
 
     root.walkRules(rule => {
@@ -90,7 +91,7 @@ module.exports = () => ({
         .map(rewriteSelector);
       for (const selector of selectors) {
         const part = unmatchable(selector);
-        if (part) rule.warn(result, `Lynx can't apply ${part} in ${selector}`);
+        if (part) problems.push(`${part} in ${selector}`);
       }
       const kept = selectors.filter(s => !rejected(s));
       if (kept.length) rule.selectors = kept;
@@ -100,9 +101,14 @@ module.exports = () => ({
     root.walkDecls(decl => {
       if (decl.value.includes('oklch(')) decl.value = replaceOklch(decl.value);
       if (UNSUPPORTED_COLOUR.test(decl.value) && !inSupports(decl)) {
-        decl.warn(result, `Lynx can't parse the colour in ${decl.prop}: ${decl.value}`);
+        problems.push(`the colour in ${decl.prop}: ${decl.value}`);
       }
     });
+
+    // One warning with no node, because a per-node warning prints the whole merged rule.
+    if (problems.length) {
+      result.warn(`Lynx can't apply:\n${problems.map(p => `  ${p}`).join('\n')}`);
+    }
   },
 });
 module.exports.postcss = true;

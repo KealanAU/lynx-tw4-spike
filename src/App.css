@@ -1,5 +1,5 @@
-/* No preflight, as in the v3 preset, and no layer(), because SDKs below 4.2
- * discard rules inside @layer. */
+/* No preflight, as in the v3 preset. No layer(), because the unlayered `*` reset
+ * below would beat layered utilities. */
 @import "tailwindcss/theme.css";
 @import "tailwindcss/utilities.css" source("./");
 @import "../runs/app.css";

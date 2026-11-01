@@ -8,7 +8,7 @@ import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
 import { defineConfig } from '@lynx-js/rspeedy';
 
 // The switches only reproduce the README's runs; see `Smallest setup` there.
-const { ENTRY = 'src/App.css', CSS_RULE, POSTCSS, OPTIMIZE, ENGINE } = process.env;
+const { ENTRY = 'src/App.css', CSS_RULE, POSTCSS, OPTIMIZE, ENGINE, INLINE_VARS, INHERIT } = process.env;
 
 export default defineConfig({
   source: {
@@ -22,6 +22,8 @@ export default defineConfig({
           `postcss ${POSTCSS === '0' ? 'off' : 'on'}`,
           `optimize ${OPTIMIZE === '0' ? 'default' : 'on'}`,
           `engine ${ENGINE ?? 'default'}`,
+          `inlineVars ${INLINE_VARS === '0' ? 'off' : 'on'}`,
+          `inherit ${INHERIT === '0' ? 'off' : 'on'}`,
         ].join(' · '),
       ),
     },
@@ -41,8 +43,8 @@ export default defineConfig({
     pluginTailwindcss(OPTIMIZE === '0' ? {} : { optimize: true }),
     // Same flags as examples/tailwindcss, so failures are v4's, not config's.
     pluginLynxConfig({
-      enableCSSInlineVariables: true,
-      enableCSSInheritance: true,
+      enableCSSInlineVariables: INLINE_VARS !== '0',
+      enableCSSInheritance: INHERIT !== '0',
       // @media needs it (Lynx 4.0+).
       enableCSSRule: CSS_RULE !== '0',
     }),
